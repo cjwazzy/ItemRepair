@@ -13,69 +13,57 @@ import org.bukkit.Material;
  * @author PIETER
  */
 public class RepairCost {
-    private float economyCost;
+    private Integer economyCost;
     private HashMap<Material, Integer> materialCost;
-    private Integer lineNr;
     
     public RepairCost(String price, Integer lineNr) {
-        this.lineNr = lineNr;
         materialCost = new HashMap<Material, Integer>();
-        setCostFromString(price);
+        economyCost = 0;
+        setCostFromString(price, lineNr);
     }
     
     public HashMap<Material, Integer> getHash() {
         return materialCost;
     }
     
-    private void setCostFromString(String price) {
+    public Integer getEconCost() {
+        return economyCost;
+    }
+    
+    private void setCostFromString(String price, Integer lineNr) {
         String[] priceArray;
+        // Split the line into each individual material:amount groupings and loop through them
         priceArray = price.split(Properties.costSplitter);
         for (String priceStr : priceArray) {
+            // Split material and amount from each other
             String[] priceStrArray = priceStr.trim().split(Properties.costAmountSplitter);
+            // We should get 2 results, one for the material, and one for the amount
             if (priceStrArray.length != 2) {
                 ItemRepair.log(Level.WARNING, "Error reading material from line #" + lineNr + ", please ensure the cost is formatted as material" + Properties.costAmountSplitter + "amount, skipping this material...");
                 continue;
             }
-            Material mat = this.getMaterialFromString(priceStrArray[0].trim());
-            Integer amount = this.getIntFromString(priceStrArray[1].trim());
-            if (mat == null) {
-                ItemRepair.log(Level.WARNING, "Error reading material from line #" + lineNr + ", material " + priceStrArray[0] + " does not exist, skipping this material...");
-                continue;
-            }
+            // Grab amount from string and verify it is a correct number
+            Integer amount = Utils.getIntFromString(priceStrArray[1].trim());
             if ((amount == null) || (amount <= 0)) {
                 ItemRepair.log(Level.WARNING, "Error reading material from line #" + lineNr + ", amount is not a valid number, skipping...");
                 continue;
             }
-            if (materialCost.put(mat, amount) != null) {
-                ItemRepair.log(Level.WARNING, "Material " + mat.toString() + " listed twice on line #" + lineNr + ", second value replaced first one...");
-            }          
+            // Check if material listed is the economy identifier
+            if (priceStrArray[0].trim().equals(Properties.economyIdentifier)) {
+                economyCost = amount;
+            }
+            else {
+                // Grab material from string and verify it exists
+                Material mat = Utils.getMaterialFromString(priceStrArray[0].trim());
+                if (mat == null) {
+                    ItemRepair.log(Level.WARNING, "Error reading material from line #" + lineNr + ", material " + priceStrArray[0] + " does not exist, skipping this material...");
+                    continue;
+                }
+                // Add material to hashmap, display a warning if it was already added once
+                if (materialCost.put(mat, amount) != null) {
+                    ItemRepair.log(Level.WARNING, "Material " + mat.toString() + " listed twice on line #" + lineNr + ", second value replaced first one...");
+                }     
+            }
         }
-    }
-    
-    private Material getMaterialFromString(String mat) {
-        Integer matID;
-        Material material;
-        try {
-            matID = Integer.valueOf(mat);
-        } catch (NumberFormatException ex) {
-            matID = null;
-        }
-        if (matID == null) {
-            material = Material.getMaterial(mat.toUpperCase());
-        }
-        else {
-            material = Material.getMaterial(matID);
-        }
-        return material;
-    }
-    
-    private Integer getIntFromString(String intStr) {
-        Integer returnInt;
-        try {
-            returnInt = Integer.valueOf(intStr);
-        } catch (NumberFormatException ex) {
-            returnInt = null;
-        }
-        return returnInt;
     }
 }

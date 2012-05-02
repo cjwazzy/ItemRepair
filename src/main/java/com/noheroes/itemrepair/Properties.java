@@ -17,4 +17,5 @@ public class Properties {
     public final static String itemToCostSplitter = "=";
     public final static String costSplitter = ",";
     public final static String costAmountSplitter = ":";
+    public final static String economyIdentifier = "ECON";
 }

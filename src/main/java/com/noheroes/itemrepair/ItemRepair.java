@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.logging.Level;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -22,17 +25,20 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class ItemRepair extends JavaPlugin {
     
-    private HashMap<String, RepairCost> repairs = new HashMap<String, RepairCost>();
+    private HashMap<Material, RepairCost> repairs = new HashMap<Material, RepairCost>();
+    private IRListener listener;
     private static ItemRepair instance;
     
     @Override 
     public void onDisable() {
-        
+        listener = null;
     }
     
     @Override
     public void onEnable() {
         instance = this;
+        listener = new IRListener(this);
+        this.getServer().getPluginManager().registerEvents(listener, this);
         loadRepairFile();
     }
     
@@ -42,6 +48,38 @@ public class ItemRepair extends JavaPlugin {
     
     public static void log(Level level, String message) {
         instance.getLogger().log(level, message);
+    }
+    
+    public HashMap<Material, Integer> playerCanAfford(Player player, Material mat) {
+        if (!repairs.containsKey(mat)) {
+            // TODO: Throw exception -- Item can't be repaired
+            this.log("Can't repair");
+            return null;
+        }
+        Inventory inv = player.getInventory();
+        // Grab a clone of the total material cost so we can manipulate the values in it without changing the original
+        HashMap<Material, Integer> totalCost = (HashMap<Material, Integer>)repairs.get(mat).getHash().clone();
+        // Loop over each inventory slot to check for materials needed.  None of the bukkit contains methods can deal with items spread out over stacks
+        for (ItemStack is : inv.getContents()) {
+            // Skip empty slots
+            if (is == null) {
+                continue;
+            }
+            // Check if material is one of the ones needed to repair
+            Material curMat = is.getType();
+            if (totalCost.containsKey(curMat)) {
+                Integer amount = totalCost.get(curMat);
+                // If the stack is large enough to cover the total cost, remove it from hashmap, otherwise remove as many items as are available from the amount stored in hashmap
+                if (is.getAmount() >= amount) {
+                    totalCost.remove(curMat);
+                }
+                else {
+                    totalCost.put(curMat, (amount - is.getAmount()));
+                }
+            }
+        }
+        // Return null if hashmap is empty (player has all materials needed) or hashmap with missing materials otherwise
+        return (totalCost.isEmpty() ? null : totalCost);
     }
     
     private void loadConfig(FileConfiguration config) {
@@ -80,10 +118,12 @@ public class ItemRepair extends JavaPlugin {
                 continue;
             }
             RepairCost rc = new RepairCost(splitLine[1].trim(), lineCount);
-            HashMap<Material, Integer> map = rc.getHash();
-            for (Material mat : map.keySet()) {
-                this.log(mat.toString() + ":" + map.get(mat).toString());
+            Material mat = Material.getMaterial(splitLine[0].trim().toUpperCase());
+            if (mat == null) {
+                this.log(Level.WARNING, "Error reading line #" + lineCount + " material " + splitLine[0].trim() + " does not exist, skipping...");
+                continue;
             }
+            repairs.put(mat, rc);
         }
         return true;
     }
