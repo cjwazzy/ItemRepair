@@ -55,6 +55,7 @@ public class ItemRepair extends JavaPlugin {
         this.getServer().getPluginManager().registerEvents(listener, this);
         loadRepairFile();
         stationHandler = new RepairStationHandler(this, this.getDataFolder().getPath());
+        this.populateExpTable();
     }
     
     public static void log(String message) {
@@ -75,7 +76,14 @@ public class ItemRepair extends JavaPlugin {
     
     public boolean leftClickEvent(Player player, Location loc) {
         if (!playerEditMode.containsKey(player)) {
-            return false;
+            // If a button is pressed, process it
+            if (loc.getBlock().getType().equals(Material.STONE_BUTTON)) {
+                return (stationHandler.clickEvent(player, loc));
+            }
+            // Just a random left click event, don't cancel it
+            else {
+                return false;
+            }
         }
         boolean done;
         done = playerEditMode.get(player).leftClickEvent(loc);
@@ -85,67 +93,32 @@ public class ItemRepair extends JavaPlugin {
         return true;
     }
     
-    public boolean rightClickEvent(Player player) {
+    public boolean rightClickEvent(Player player, Location loc) {
         if (!playerEditMode.containsKey(player)) {
-            return false;
+            // If a button is pressed, process it
+            if ((loc != null) && loc.getBlock().getType().equals(Material.STONE_BUTTON)) {
+                return (stationHandler.clickEvent(player, loc));
+            }
+            // Just a random right click event, don't cancel it
+            else {
+                return false;
+            }
         }
         playerEditMode.remove(player);
         player.sendMessage(ChatColor.YELLOW + "Cancelled adding repair station");
         return true;
     }
-    
-    public HashMap<Material, Integer> repairMatCheck(Inventory inv, Material mat) {
-        if (!repairs.containsKey(mat)) {
-            // TODO: Throw exception -- Item can't be repaired
-            this.log("Can't repair");
-            return null;
-        }
-        // Grab a clone of the total material cost so we can manipulate the values in it without changing the original
-        HashMap<Material, Integer> totalCost = (HashMap<Material, Integer>)repairs.get(mat).getHash().clone();
-        // Loop over each inventory slot to check for materials needed.  None of the bukkit contains methods can deal with items spread out over stacks
-        for (ItemStack is : inv.getContents()) {
-            // Skip empty slots
-            if (is == null) {
-                continue;
-            }
-            // Check if material is one of the ones needed to repair
-            Material curMat = is.getType();
-            if (totalCost.containsKey(curMat)) {
-                Integer amount = totalCost.get(curMat);
-                // If the stack is large enough to cover the total cost, remove it from hashmap, otherwise remove as many items as are available from the amount stored in hashmap
-                if (is.getAmount() >= amount) {
-                    totalCost.remove(curMat);
-                }
-                else {
-                    totalCost.put(curMat, (amount - is.getAmount()));
-                }
-            }
-        }
-        // Return null if hashmap is empty (player has all materials needed) or hashmap with missing materials otherwise
-        return (totalCost.isEmpty() ? null : totalCost);
-    }
-    
-    public boolean playerEconCheck(Player player, Integer price) {
-        // No cost associated with recipe, automatically return true
-        if (price == null) {
-            return true;
-        }
-        if (player == null) {
-            return false;
-        }
-        // Economy is not loaded, recipes with a cost do not work
-        if (!this.isEconEnabled()) {
-            return false;
-        }
-        return (econ.getBalance(player.getName()) >= price);
-    }
-    
+        
     public boolean isEconEnabled() {
         return (econ != null);
     }
     
     public RepairStationHandler getHandler() {
         return stationHandler;
+    }
+    
+    public RepairCost getRepairCost(Material mat) {
+        return repairs.get(mat);
     }
     
     // ************* PRIVATE METHODS *****************
@@ -162,6 +135,7 @@ public class ItemRepair extends JavaPlugin {
     private void loadConfig(FileConfiguration config) {
         config.options().copyDefaults(true);
         Properties.useEconomy = config.getBoolean("UseEconomy");
+        Properties.currencyName = config.getString("CurrencyName");
         this.saveConfig();
     }
     
@@ -219,6 +193,14 @@ public class ItemRepair extends JavaPlugin {
         } catch (Exception ex) {
             ex.printStackTrace();
             return null;
+        }
+    }
+    
+    private void populateExpTable() {
+        int currentTotal = 0;
+        for (int i = 0; i < Properties.expTable.length; i++) {
+            Properties.expTable[i] = currentTotal;
+            currentTotal += 7 + (i * 7 >> 1);
         }
     }
 }

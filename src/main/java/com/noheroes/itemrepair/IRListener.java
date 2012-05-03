@@ -45,8 +45,13 @@ public class IRListener implements Listener {
             }*/
         }
         // Right clicked block
-        if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK) || event.getAction().equals(Action.RIGHT_CLICK_AIR)) {
-            if (ir.rightClickEvent(event.getPlayer())) {
+        if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
+            if (ir.rightClickEvent(event.getPlayer(), event.getClickedBlock().getLocation())) {
+                event.setCancelled(true);
+            }
+        }
+        if (event.getAction().equals(Action.RIGHT_CLICK_AIR)) {
+            if (ir.rightClickEvent(event.getPlayer(), null)) {
                 event.setCancelled(true);
             }
         }

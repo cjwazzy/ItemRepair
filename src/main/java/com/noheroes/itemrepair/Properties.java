@@ -18,7 +18,12 @@ public class Properties {
     public final static String costSplitter = ",";
     public final static String costAmountSplitter = ":";
     public final static String economyIdentifier = "ECON";
+    public final static String expIdentifier = "XP";
     public final static String adminPermissions = "itemrepair.admin";
     public final static String userPermissions = "itemrepair.use";
+    public static final int MAX_LEVEL = 1000;
+    public static final int expTable[] = new int[MAX_LEVEL];
+    // Set by config
     public static boolean useEconomy;
+    public static String currencyName;
 }

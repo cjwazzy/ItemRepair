@@ -4,7 +4,7 @@
  */
 package com.noheroes.itemrepair;
 
-import java.awt.Color;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -40,7 +40,7 @@ public class IRCommandExecutor implements CommandExecutor {
         }
         if (com.equalsIgnoreCase("create")) {
             if (args.length < 2) {
-                sender.sendMessage(Color.RED + "You must specify a name for the station");
+                sender.sendMessage(ChatColor.RED + "You must specify a name for the station");
             }
             else {
                 ir.addPlayerToEditMode((Player)sender, args[1]);

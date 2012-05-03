@@ -14,20 +14,31 @@ import org.bukkit.Material;
  */
 public class RepairCost {
     private Integer economyCost;
+    private Integer expCost;
     private HashMap<Material, Integer> materialCost;
     
     public RepairCost(String price, Integer lineNr) {
         materialCost = new HashMap<Material, Integer>();
         economyCost = 0;
+        expCost = 0;
         setCostFromString(price, lineNr);
     }
     
-    public HashMap<Material, Integer> getHash() {
+    public HashMap<Material, Integer> getHashMapCopy() {
+        HashMap<Material, Integer> hashCopy = (HashMap<Material, Integer>)materialCost.clone();
+        return hashCopy;
+    }
+    
+    public HashMap<Material, Integer> getHashMap() {
         return materialCost;
     }
     
     public Integer getEconCost() {
         return economyCost;
+    }
+    
+    public Integer getExpCost() {
+        return expCost;
     }
     
     private void setCostFromString(String price, Integer lineNr) {
@@ -51,6 +62,9 @@ public class RepairCost {
             // Check if material listed is the economy identifier
             if (priceStrArray[0].trim().equals(Properties.economyIdentifier)) {
                 economyCost = amount;
+            }
+            else if (priceStrArray[0].trim().equals(Properties.expIdentifier)) {
+                expCost = amount;
             }
             else {
                 // Grab material from string and verify it exists
