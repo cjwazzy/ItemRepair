@@ -3,3 +3,9 @@ version: 0.1
 author: Morthis
 description: Allows for creation of blocks that can be clicked to repair items for optional costs
 main: com.noheroes.itemrepair.ItemRepair
+softdepend: [Vault]
+commands:
+  itemrepair:
+    description: Commands for creating a repair station
+    aliases: [ir]
+    usage: "Type /ir help for more information"

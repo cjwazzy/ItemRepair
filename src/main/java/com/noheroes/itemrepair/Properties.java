@@ -13,9 +13,12 @@ public class Properties {
     private Properties () { };
     
     public final static String repairCostFileName = "repaircost.txt";
-    public final static String locationFileName = "locations.dat";
+    public final static String locationFileName = "locations.mini";
     public final static String itemToCostSplitter = "=";
     public final static String costSplitter = ",";
     public final static String costAmountSplitter = ":";
     public final static String economyIdentifier = "ECON";
+    public final static String adminPermissions = "itemrepair.admin";
+    public final static String userPermissions = "itemrepair.use";
+    public static boolean useEconomy;
 }

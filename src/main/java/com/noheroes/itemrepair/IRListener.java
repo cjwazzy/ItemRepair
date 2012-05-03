@@ -28,9 +28,13 @@ public class IRListener implements Listener {
     public void onPlayerClick(PlayerInteractEvent event) {
         // Left clicked block
         if (event.getAction().equals(Action.LEFT_CLICK_BLOCK)) {
+            if (ir.leftClickEvent(event.getPlayer(), event.getClickedBlock().getLocation())) {
+                event.setCancelled(true);
+            }
+            /*
             Player player = event.getPlayer();
             Material mat = event.getMaterial();
-            HashMap<Material, Integer> temp = ir.playerCanAfford(player, mat);
+            HashMap<Material, Integer> temp = ir.repairMatCheck(player.getInventory(), mat);
             if (temp == null) {
                 ir.log("You have the materials");
             }
@@ -38,11 +42,13 @@ public class IRListener implements Listener {
                 for (Material material : temp.keySet()) {
                     ir.log("Missing: " + material.toString() + ":" + temp.get(material).toString());
                 }
-            }
+            }*/
         }
         // Right clicked block
-        if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
-            
+        if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK) || event.getAction().equals(Action.RIGHT_CLICK_AIR)) {
+            if (ir.rightClickEvent(event.getPlayer())) {
+                event.setCancelled(true);
+            }
         }
     }
 }
