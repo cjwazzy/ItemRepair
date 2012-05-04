@@ -25,5 +25,4 @@ public class Properties {
     public static final int expTable[] = new int[MAX_LEVEL];
     // Set by config
     public static boolean useEconomy;
-    public static String currencyName;
 }

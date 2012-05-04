@@ -92,7 +92,7 @@ public class Utils {
             }
         }
         if (rc.getEconCost() != 0) {
-            msg += " " + ChatColor.AQUA + Properties.currencyName + ":" + ChatColor.YELLOW + rc.getEconCost() + ",";
+            msg += " " + ChatColor.AQUA + ItemRepair.econ.currencyNamePlural() + ":" + ChatColor.YELLOW + rc.getEconCost() + ",";
         }
         if (rc.getExpCost() != 0) {
             msg += ChatColor.AQUA + " Exp:" + ChatColor.YELLOW + rc.getExpCost();

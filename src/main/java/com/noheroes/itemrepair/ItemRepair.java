@@ -143,7 +143,6 @@ public class ItemRepair extends JavaPlugin {
     private void loadConfig(FileConfiguration config) {
         config.options().copyDefaults(true);
         Properties.useEconomy = config.getBoolean("UseEconomy");
-        Properties.currencyName = config.getString("CurrencyName");
         this.saveConfig();
     }
     

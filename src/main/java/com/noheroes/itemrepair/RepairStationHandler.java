@@ -129,7 +129,7 @@ public class RepairStationHandler {
         // Player balance too low
         if (cost != 0d) {
             player.sendMessage(ChatColor.AQUA + "You cannot afford this repair, you are missing " + ChatColor.RED + 
-                    cost + ChatColor.AQUA + " " + Properties.currencyName);
+                    ir.econ.format(cost));
             success = false;
         }
         // Player does not have enough exp
@@ -140,7 +140,7 @@ public class RepairStationHandler {
         if (success) {
             // Charge player econ cost, cancel event if it failed
             if (!this.chargePlayerEcon(player, is.getType())) {
-                player.sendMessage(ChatColor.RED + "An error occurred trying to charge " + Properties.currencyName + ", repair cancelled");
+                player.sendMessage(ChatColor.RED + "An error occurred trying to charge " + ir.econ.currencyNamePlural() + ", repair cancelled");
                 return true;
             }
             // Charge exp
