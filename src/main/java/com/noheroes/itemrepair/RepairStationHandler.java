@@ -96,7 +96,7 @@ public class RepairStationHandler {
             return true;
         }
         // Display repair cost
-        player.sendMessage(ChatColor.AQUA + "The cost to repair " + ChatColor.GREEN + is.getType().toString() + ChatColor.AQUA + " is:");
+        player.sendMessage(ChatColor.AQUA + "The cost to repair " + ChatColor.GREEN + MaterialNames.getItemName(is.getTypeId()) + ChatColor.AQUA + " is:");
         player.sendMessage(Utils.getCostString(ir.getRepairCost(is.getType())));
         // Player balance calculation
         Double cost = this.playerEconCheck(player, is.getType());
@@ -111,10 +111,10 @@ public class RepairStationHandler {
             for (Material mat : leftover.keySet()) {
                 Integer amount = leftover.get(mat);
                 if (amount > 0) {
-                    extraMsg += ChatColor.GREEN + amount.toString() + ChatColor.YELLOW + "x" + mat.toString() + ",";
+                    extraMsg += ChatColor.GREEN + amount.toString() + ChatColor.YELLOW + " " + MaterialNames.getItemName(mat.getId()) + ",";
                 }
                 else {
-                    missMsg += ChatColor.RED + String.valueOf(-amount) + ChatColor.YELLOW + "x" + mat.toString() + ",";
+                    missMsg += ChatColor.RED + String.valueOf(-amount) + ChatColor.YELLOW + " " + MaterialNames.getItemName(mat.getId()) + ",";
                 }
                 
             }

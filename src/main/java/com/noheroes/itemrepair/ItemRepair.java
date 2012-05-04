@@ -176,7 +176,7 @@ public class ItemRepair extends JavaPlugin {
                 continue;
             }
             RepairCost rc = new RepairCost(splitLine[1].trim(), lineCount);
-            Material mat = Material.getMaterial(splitLine[0].trim().toUpperCase());
+            Material mat = Utils.getMaterialFromString(splitLine[0].trim());
             if (mat == null) {
                 this.log(Level.WARNING, "Error reading line #" + lineCount + " material " + splitLine[0].trim() + " does not exist, skipping...");
                 continue;

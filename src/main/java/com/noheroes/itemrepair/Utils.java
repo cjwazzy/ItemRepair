@@ -88,7 +88,7 @@ public class Utils {
             msg += ChatColor.AQUA + "Materials: ";
             for (Material mat : rc.getHashMap().keySet()) {
                 amount = rc.getHashMap().get(mat);
-                msg += "" + ChatColor.GREEN + amount + ChatColor.YELLOW + "x" + mat.toString() + ",";
+                msg += "" + ChatColor.GREEN + amount + ChatColor.YELLOW + " " + MaterialNames.getItemName(mat.getId()) + ",";
             }
         }
         if (rc.getEconCost() != 0) {
