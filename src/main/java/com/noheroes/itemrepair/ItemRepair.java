@@ -18,8 +18,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -75,6 +73,10 @@ public class ItemRepair extends JavaPlugin {
         playerEditMode.put(player, editMode);
     }
     
+    public void removePlayerFromEditMode(Player player) {
+        playerEditMode.remove(player);
+    }
+    
     public boolean leftClickEvent(Player player, Location loc) {
         if (!playerEditMode.containsKey(player)) {
             // If a button is pressed, process it
@@ -120,6 +122,11 @@ public class ItemRepair extends JavaPlugin {
     
     public RepairCost getRepairCost(Material mat) {
         return repairs.get(mat);
+    }
+    
+    public void reloadRepairFile() {
+        this.repairs.clear();
+        this.loadRepairFile();
     }
     
     // ************* PRIVATE METHODS *****************

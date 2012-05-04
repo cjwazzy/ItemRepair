@@ -113,4 +113,12 @@ public class Utils {
         
         return Properties.expTable[level] + currentLevelProgress;
     }
+    
+    public static void resetExp(Player player){
+        if(player == null)
+            return;
+        player.setTotalExperience(0);
+        player.setLevel(0);
+        player.setExp(0);
+    }
 }

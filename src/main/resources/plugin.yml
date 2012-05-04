@@ -1,5 +1,5 @@
 name: ItemRepair
-version: 0.1
+version: 0.5
 author: Morthis
 description: Allows for creation of blocks that can be clicked to repair items for optional costs
 main: com.noheroes.itemrepair.ItemRepair

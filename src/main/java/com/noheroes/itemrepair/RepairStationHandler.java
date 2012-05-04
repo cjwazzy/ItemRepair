@@ -8,6 +8,7 @@ import com.miniDC.Arguments;
 import com.miniDC.Mini;
 import java.util.HashMap;
 import java.util.logging.Level;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,7 +22,6 @@ import org.bukkit.inventory.ItemStack;
  * @author PIETER
  */
 
-// ************************** TODO: CHARGE EXP/MONEY ********************************
 public class RepairStationHandler {
     private ItemRepair ir;
     private HashMap<String, RepairStation> repairStations = new HashMap<String, RepairStation>();
@@ -38,12 +38,14 @@ public class RepairStationHandler {
         this.loadStations();
     }
     
-    public void createStation(Location buttonLoc, Location dispenserLoc, String stationName) {
+    // ************  PUBLIC METHODS *************
+    
+    public void createStation(Location buttonLoc, Location dispenserLoc, String stationName) throws MissingOrIncorrectParametersException {
         if (stationName == null) {
-            return; //  TODO: EXCEPTION
+            throw new MissingOrIncorrectParametersException("Invalid station name");
         }
         if (repairStations.containsKey(stationName)) {
-            return; //  TODO: EXCEPTION
+            throw new MissingOrIncorrectParametersException("That station name already exists");
         }
         RepairStation station = new RepairStation(buttonLoc, dispenserLoc, stationName);
         repairStations.put(stationName, station);
@@ -52,12 +54,12 @@ public class RepairStationHandler {
         this.saveStation(station);
     }
     
-    public void deleteStation(String stationName) {
+    public void deleteStation(String stationName) throws MissingOrIncorrectParametersException {
         if (stationName == null) {
-            return;  // EX
+            throw new MissingOrIncorrectParametersException("Invalid station name");
         }
         if (!repairStations.containsKey(stationName)) {
-            return; // EX
+            throw new MissingOrIncorrectParametersException("That station does not exist");
         }
         buttonLocToName.remove(this.getStation(stationName).getButtonLoc());
         dispenserLocToName.remove(this.getStation(stationName).getDispenserLoc());
@@ -70,20 +72,28 @@ public class RepairStationHandler {
         if (!buttonLocToName.containsKey(loc)) {
             return false;
         }
+        if (!player.hasPermission(Properties.userPermissions)) {
+            player.sendMessage(ChatColor.RED + "You don't have permission to use this repair station");
+            return true;
+        }
         boolean success = true;
         RepairStation rs = this.getStationFromButton(loc);
         Location dispenserLoc = rs.getDispenserLoc();
         // No dispenser at dispenser location
         if (!dispenserLoc.getBlock().getType().equals(Material.DISPENSER)) {
             ir.log(Level.WARNING, "Error - Dispenser does not exist at location " + dispenserLoc.toString() + " removing station");
-            this.deleteStation(rs.getName());
+            // No exception should happen here since the parameters are driven by internal data
+            try {
+                this.deleteStation(rs.getName());
+            } catch (Exception ex) {}
         }
         // Grab dispenser inventory and try to find a repairable item inside
         Inventory inv = ((Dispenser)dispenserLoc.getBlock().getState()).getInventory();
         ItemStack is = this.findRepairItem(inv);
         // No repairable item found
         if (is == null) {
-            return true; // EXCEPTION
+            player.sendMessage(ChatColor.RED + "There is no item present that can be repaired");
+            return true;
         }
         // Display repair cost
         player.sendMessage(ChatColor.AQUA + "The cost to repair " + ChatColor.GREEN + is.getType().toString() + ChatColor.AQUA + " is:");
@@ -96,7 +106,6 @@ public class RepairStationHandler {
         Integer expMissing = this.playerExpCheck(player, is.getType());
         // Incorrect materials
         if (leftover != null) {
-            //player.sendMessage(ChatColor.YELLOW + "There are " + ChatColor.RED + "missing" + ChatColor.YELLOW + " or " + ChatColor.GREEN + "extra" + ChatColor.YELLOW + " items in the dispenser");
             String missMsg = ChatColor.RED + "Missing: ";
             String extraMsg = ChatColor.GREEN + "Extra: ";
             for (Material mat : leftover.keySet()) {
@@ -129,7 +138,14 @@ public class RepairStationHandler {
             success = false;
         }
         if (success) {
-            //this.clearInventory(dispenserLoc.getBlock().getState(), is);
+            // Charge player econ cost, cancel event if it failed
+            if (!this.chargePlayerEcon(player, is.getType())) {
+                player.sendMessage(ChatColor.RED + "An error occurred trying to charge " + Properties.currencyName + ", repair cancelled");
+                return true;
+            }
+            // Charge exp
+            this.chargePlayerExp(player, is.getType());
+            // Copy item, clear inventory and replace the item with full durability
             ItemStack copy = is.clone();
             Dispenser disp = (Dispenser)dispenserLoc.getBlock().getState();
             disp.getInventory().clear();
@@ -143,6 +159,27 @@ public class RepairStationHandler {
         return true;
     }
     
+    public void blockBreakEvent(Location loc) {
+        String stationName = this.buttonLocToName.get(loc);
+        if (stationName != null) {
+            try {
+                this.deleteStation(stationName);
+                ir.log("Button for station " + stationName + " was destroyed, removing station");
+            } catch (Exception ex) { }
+        }
+        stationName = this.dispenserLocToName.get(loc);
+        if (stationName != null) {
+            try {
+                this.deleteStation(stationName);
+                ir.log("Dispenser for station " + stationName + " was destroyed, removing station");
+            } catch (Exception ex) { }
+        }
+    }
+    
+    public boolean stationExists(String stationName) {
+        return repairStations.containsKey(stationName);
+    }
+    
     public RepairStation getStation(String stationName) {
         return (stationName == null) ? null : repairStations.get(stationName);
     }
@@ -150,6 +187,8 @@ public class RepairStationHandler {
     public RepairStation getStationFromButton(Location buttonLoc) {
         return (buttonLoc == null) ? null : getStation(buttonLocToName.get(buttonLoc));
     }
+    
+    // ************  PRIVATE METHODS *************
     
     private void saveStation(RepairStation station) {
         Arguments arg = new Arguments(station.getName());
@@ -182,11 +221,6 @@ public class RepairStationHandler {
     private HashMap<Material, Integer> repairMatCheck(Inventory inv, ItemStack repairIs) {
         Material mat = repairIs.getType();
         RepairCost rc = ir.getRepairCost(mat);
-        if (rc == null) {
-            // TODO: Throw exception -- Item can't be repaired
-            ir.log("Can't repair");
-            return null;
-        }
         // Grab a clone of the total material cost so we can manipulate the values in it without changing the original
         HashMap<Material, Integer> totalCost = rc.getHashMapCopy();
         HashMap<Material, Integer> extraMats = new HashMap<Material, Integer>();
@@ -295,5 +329,25 @@ public class RepairStationHandler {
             return null;
         }
         return new RepairStation(buttonLoc, dispenserLoc, stationName);
+    }
+    
+    private boolean chargePlayerEcon(Player player, Material mat) {
+            Integer cost = ir.getRepairCost(mat).getEconCost();
+            if (cost == 0) {
+                return true;
+            }
+            EconomyResponse er = ir.econ.withdrawPlayer(player.getName(), cost);
+            return er.transactionSuccess();
+    }
+    
+    private void chargePlayerExp(Player player, Material mat) {
+        Integer expCost = ir.getRepairCost(mat).getExpCost();
+        if (expCost == 0) {
+            return;
+        }
+        Integer curExp = Utils.getTotalExp(player);
+        curExp = curExp - expCost;
+        Utils.resetExp(player);
+        player.giveExp(curExp);
     }
 }

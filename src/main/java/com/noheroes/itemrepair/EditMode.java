@@ -44,8 +44,14 @@ public class EditMode {
         if (editStep == EditStep.ADD_DISPENSER) {
             if (loc.getBlock().getType().equals(Material.DISPENSER)) {
                 dispenserLoc = loc;
+                try {
+                    stationHandler.createStation(buttonLoc, dispenserLoc, stationName);
+                }
+                catch (MissingOrIncorrectParametersException ex) {
+                    player.sendMessage(ex.getMessage());
+                    return true;
+                }
                 player.sendMessage(ChatColor.YELLOW + "Repair station " + stationName + " added");
-                stationHandler.createStation(buttonLoc, dispenserLoc, stationName);
                 return true;
             }
         }

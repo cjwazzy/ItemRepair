@@ -43,7 +43,12 @@ public class IRCommandExecutor implements CommandExecutor {
                 sender.sendMessage(ChatColor.RED + "You must specify a name for the station");
             }
             else {
-                ir.addPlayerToEditMode((Player)sender, args[1]);
+                if (ir.getHandler().stationExists(args[1])) {
+                    sender.sendMessage(ChatColor.RED + "A station with this name already exists");
+                }
+                else {
+                    ir.addPlayerToEditMode((Player)sender, args[1]);
+                }
             }
         }
         else if (com.equalsIgnoreCase("delete") || com.equalsIgnoreCase("remove")) {
@@ -51,8 +56,16 @@ public class IRCommandExecutor implements CommandExecutor {
                 sender.sendMessage(ChatColor.RED + "You must specify a name for the station");
             }
             else {
-                ir.getHandler().deleteStation(args[1]);
+                try {
+                    ir.getHandler().deleteStation(args[1]);
+                } catch (MissingOrIncorrectParametersException ex) {
+                    sender.sendMessage(ex.getMessage());
+                }
             }
+        }
+        else if (com.equalsIgnoreCase("reload")) {
+            ir.reloadRepairFile();
+            sender.sendMessage(ChatColor.YELLOW + "Repair file reloaded");
         }
         return true;
     }
