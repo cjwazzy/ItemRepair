@@ -11,7 +11,6 @@ import java.util.logging.Level;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.block.BlockState;
 import org.bukkit.block.Dispenser;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -21,6 +20,8 @@ import org.bukkit.inventory.ItemStack;
  *
  * @author PIETER
  */
+
+// ************************** TODO: CHARGE EXP/MONEY ********************************
 public class RepairStationHandler {
     private ItemRepair ir;
     private HashMap<String, RepairStation> repairStations = new HashMap<String, RepairStation>();
@@ -34,6 +35,7 @@ public class RepairStationHandler {
     public RepairStationHandler(ItemRepair ir, String folder) {
         this.ir = ir;
         miniDb = new Mini(folder, Properties.locationFileName);
+        this.loadStations();
     }
     
     public void createStation(Location buttonLoc, Location dispenserLoc, String stationName) {
@@ -65,7 +67,6 @@ public class RepairStationHandler {
     
     public boolean clickEvent(Player player, Location loc) {
         // If the button is not part of a repair station, ignore the event
-        ir.log("test");
         if (!buttonLocToName.containsKey(loc)) {
             return false;
         }
@@ -136,6 +137,7 @@ public class RepairStationHandler {
             copy.setDurability(maxDura);
             disp.getInventory().addItem(copy);
             disp.update(true);
+            player.sendMessage(ChatColor.AQUA + "Your " + is.getType().toString() + " has been repaied");
             return false;
         }
         return true;
@@ -241,18 +243,6 @@ public class RepairStationHandler {
         // Return null if hashmap is empty (player has all materials needed) or hashmap with missing materials otherwise
         return (extraMats.isEmpty() ? null : extraMats);
     }
-    /*
-    private void clearInventory(BlockState state, ItemStack repairIs) {
-        ((Dispenser)state).getInventory().clear();
-        for (ItemStack is : inv.getContents()) {
-            if (is == null) {
-                continue;
-            }
-            if (!((is.getType() == repairIs.getType()) && (is.getDurability() == repairIs.getDurability()))) {
-                is = null;
-            }
-        }
-    }*/
     
     private Double playerEconCheck(Player player, Material mat) {
         Integer price = ir.getRepairCost(mat).getEconCost();
@@ -272,5 +262,38 @@ public class RepairStationHandler {
         Integer expCost = ir.getRepairCost(mat).getExpCost();
         Integer playerExp = Utils.getTotalExp(player);
         return ((playerExp >= expCost) ? 0 : (expCost - playerExp));
+    }
+    
+    private void loadStations() {
+        HashMap<String, Arguments> stations = miniDb.getIndices();
+        for (Arguments arg : stations.values()) {
+            RepairStation rs = this.argToStation(arg);
+            if (rs != null) {
+                repairStations.put(rs.getName(), rs);
+                buttonLocToName.put(rs.getButtonLoc(), rs.getName());
+                dispenserLocToName.put(rs.getDispenserLoc(), rs.getName());
+            }
+        }
+    }
+    
+    private RepairStation argToStation(Arguments arg) {
+        Location buttonLoc = Utils.stringToLoc(arg.getArray(buttonLocKey));
+        Location dispenserLoc = Utils.stringToLoc(arg.getArray(dispenserLocKey));
+        String stationName = arg.getKey();
+        if (stationName == null) {
+            return null;
+        }
+        if ((dispenserLoc == null) || (buttonLoc == null)) {
+            this.removeStation(stationName);
+            ir.log(Level.WARNING, "Error loading station file, failed to read location, removing this station...");
+            return null;
+        }
+        if (!dispenserLoc.getBlock().getType().equals(Material.DISPENSER) 
+                || !buttonLoc.getBlock().getType().equals(Material.STONE_BUTTON)) {
+            this.removeStation(stationName);
+            ir.log(Level.WARNING, "Error loading station file, button or dispenser from station missing, removing this station...");
+            return null;
+        }
+        return new RepairStation(buttonLoc, dispenserLoc, stationName);
     }
 }

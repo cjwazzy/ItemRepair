@@ -46,6 +46,14 @@ public class IRCommandExecutor implements CommandExecutor {
                 ir.addPlayerToEditMode((Player)sender, args[1]);
             }
         }
+        else if (com.equalsIgnoreCase("delete") || com.equalsIgnoreCase("remove")) {
+            if (args.length < 2) {
+                sender.sendMessage(ChatColor.RED + "You must specify a name for the station");
+            }
+            else {
+                ir.getHandler().deleteStation(args[1]);
+            }
+        }
         return true;
     }
 }

@@ -68,7 +68,8 @@ public class ItemRepair extends JavaPlugin {
     
     public void addPlayerToEditMode(Player player, String stationName) {
         if (this.playerEditMode.containsKey(player)) {
-            return; // EX
+            player.sendMessage(ChatColor.RED + "You are already in edit mode, right click to cancel");
+            return;
         }
         EditMode editMode = new EditMode(player, stationName, stationHandler);
         playerEditMode.put(player, editMode);
