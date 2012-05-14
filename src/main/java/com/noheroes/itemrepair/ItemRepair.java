@@ -4,6 +4,7 @@
  */
 package com.noheroes.itemrepair;
 
+import com.noheroes.itemrepair.Utils.ReadType;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -28,7 +29,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class ItemRepair extends JavaPlugin {
     public static Economy econ = null;
     
-    private HashMap<Material, RepairCost> repairs = new HashMap<Material, RepairCost>();
+    private HashMap<Material, RepairCost> repairCosts = new HashMap<Material, RepairCost>();
+    private HashMap<ItemEnchantment, RepairCost> enchantCosts = new HashMap<ItemEnchantment, RepairCost>();
     private HashMap<Player, EditMode> playerEditMode = new HashMap<Player, EditMode>();
     private IRListener listener;
     private RepairStationHandler stationHandler;
@@ -81,7 +83,7 @@ public class ItemRepair extends JavaPlugin {
         if (!playerEditMode.containsKey(player)) {
             // If a button is pressed, process it
             if (loc.getBlock().getType().equals(Material.STONE_BUTTON)) {
-                return (stationHandler.clickEvent(player, loc));
+                return (stationHandler.leftClickEvent(player, loc));
             }
             // Just a random left click event, don't cancel it
             else {
@@ -100,7 +102,7 @@ public class ItemRepair extends JavaPlugin {
         if (!playerEditMode.containsKey(player)) {
             // If a button is pressed, process it
             if ((loc != null) && loc.getBlock().getType().equals(Material.STONE_BUTTON)) {
-                return (stationHandler.clickEvent(player, loc));
+                return (stationHandler.rightClickEvent(player, loc));
             }
             // Just a random right click event, don't cancel it
             else {
@@ -121,11 +123,22 @@ public class ItemRepair extends JavaPlugin {
     }
     
     public RepairCost getRepairCost(Material mat) {
-        return repairs.get(mat);
+        return repairCosts.get(mat);
+    }
+    
+    public RepairCost getEnchantcost(ItemEnchantment ie) {
+        if (enchantCosts.containsKey(ie)) {
+            return enchantCosts.get(ie);
+        }
+        else {
+            ItemEnchantment temp = new ItemEnchantment(Properties.genericEnchantIdentifier, ie.getLevel());
+            return enchantCosts.get(temp);
+        }
     }
     
     public void reloadRepairFile() {
-        this.repairs.clear();
+        this.repairCosts.clear();
+        this.enchantCosts.clear();
         this.loadRepairFile();
     }
     
@@ -162,10 +175,20 @@ public class ItemRepair extends JavaPlugin {
             return false;
         }
         int lineCount = 0;
+        ReadType type = ReadType.MATERIAL;
         for (String line : strList) {
             lineCount++;
             // Ignore comments
             if (line.charAt(0) == '#') {
+                continue;
+            }
+            this.log(line);
+            if (line.trim().equals(Properties.materialRepairIdentifier)) {
+                type = ReadType.MATERIAL;
+                continue;
+            }
+            if (line.trim().equals(Properties.enchantRepairIdentifier)) {
+                type = ReadType.ENCHANT;
                 continue;
             }
             // Split line into item and cost
@@ -176,12 +199,27 @@ public class ItemRepair extends JavaPlugin {
                 continue;
             }
             RepairCost rc = new RepairCost(splitLine[1].trim(), lineCount);
-            Material mat = Utils.getMaterialFromString(splitLine[0].trim());
-            if (mat == null) {
-                this.log(Level.WARNING, "Error reading line #" + lineCount + " material " + splitLine[0].trim() + " does not exist, skipping...");
-                continue;
+            if (type.equals(ReadType.MATERIAL)) {
+                Material mat = Utils.getMaterialFromString(splitLine[0].trim());
+                if (mat == null) {
+                    this.log(Level.WARNING, "Error reading line #" + lineCount + " material " + splitLine[0].trim() + " does not exist, skipping...");
+                    continue;
+                }
+                repairCosts.put(mat, rc);
             }
-            repairs.put(mat, rc);
+            if (type.equals(ReadType.ENCHANT)) {
+                String[] enchantSplit = splitLine[0].trim().split(Properties.enchantLevelSplitter);
+                if (enchantSplit.length != 2) {
+                    this.log(Level.WARNING, "Error reading line #" + lineCount + ", enchant information is not correct");
+                    continue;
+                }
+                ItemEnchantment ie = new ItemEnchantment(enchantSplit[0].trim(), enchantSplit[1].trim());
+                if (!ie.isValid()) {
+                    this.log(Level.WARNING, "Error reading line #" + lineCount + ", invalid enchant level");
+                    continue;
+                }
+                enchantCosts.put(ie, rc);
+            }
         }
         return true;
     }

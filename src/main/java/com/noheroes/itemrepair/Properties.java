@@ -17,8 +17,12 @@ public class Properties {
     public final static String itemToCostSplitter = "=";
     public final static String costSplitter = ",";
     public final static String costAmountSplitter = ":";
+    public final static String enchantLevelSplitter = ":";
     public final static String economyIdentifier = "ECON";
     public final static String expIdentifier = "XP";
+    public final static String genericEnchantIdentifier = "GenericEnchant";
+    public final static String materialRepairIdentifier = "[MaterialCost]";
+    public final static String enchantRepairIdentifier = "[EnchantCost]";
     public final static String adminPermissions = "itemrepair.admin";
     public final static String userPermissions = "itemrepair.use";
     public static final int MAX_LEVEL = 1000;

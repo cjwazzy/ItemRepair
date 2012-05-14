@@ -4,6 +4,7 @@
  */
 package com.noheroes.itemrepair;
 
+import java.util.HashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -18,6 +19,10 @@ import org.bukkit.entity.Player;
 public class Utils {
 
     private Utils () {};
+    
+    public enum ReadType {
+        MATERIAL, ENCHANT
+    }
     
     public static Material getMaterialFromString(String mat) {
         Integer matID;
@@ -34,6 +39,21 @@ public class Utils {
             material = Material.getMaterial(matID);
         }
         return material;
+    }
+    
+    public static RepairCost addCosts(RepairCost rc1, RepairCost rc2) {
+        Integer finalEconCost = rc1.getEconCost() + rc2.getEconCost();
+        Integer finalExpCost = rc1.getExpCost() + rc2.getExpCost();
+        HashMap<Material, Integer> addMap = rc1.getHashMap();
+        HashMap<Material, Integer> finalMap = rc2.getHashMapCopy();
+        for (Material mat : addMap.keySet()) {
+            Integer amount = addMap.get(mat);
+            if (finalMap.get(mat) != null) {
+                amount += finalMap.get(mat);
+            }
+            finalMap.put(mat, amount);
+        }
+        return new RepairCost(finalEconCost, finalExpCost, finalMap);
     }
     
     public static Integer getIntFromString(String intStr) {

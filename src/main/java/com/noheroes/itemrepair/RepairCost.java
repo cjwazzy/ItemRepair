@@ -24,6 +24,12 @@ public class RepairCost {
         setCostFromString(price, lineNr);
     }
     
+    public RepairCost(Integer economyCost, Integer expCost, HashMap<Material, Integer> materialCost) {
+        this.economyCost = economyCost;
+        this.expCost = expCost;
+        this.materialCost = materialCost;
+    }
+    
     public HashMap<Material, Integer> getHashMapCopy() {
         HashMap<Material, Integer> hashCopy = (HashMap<Material, Integer>)materialCost.clone();
         return hashCopy;

@@ -7,12 +7,14 @@ package com.noheroes.itemrepair;
 import com.miniDC.Arguments;
 import com.miniDC.Mini;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Dispenser;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -67,7 +69,7 @@ public class RepairStationHandler {
         this.removeStation(stationName);
     }
     
-    public boolean clickEvent(Player player, Location loc) {
+    public boolean rightClickEvent(Player player, Location loc) {
         // If the button is not part of a repair station, ignore the event
         if (!buttonLocToName.containsKey(loc)) {
             return false;
@@ -76,7 +78,6 @@ public class RepairStationHandler {
             player.sendMessage(ChatColor.RED + "You don't have permission to use this repair station");
             return true;
         }
-        boolean success = true;
         RepairStation rs = this.getStationFromButton(loc);
         Location dispenserLoc = rs.getDispenserLoc();
         // No dispenser at dispenser location
@@ -89,21 +90,61 @@ public class RepairStationHandler {
         }
         // Grab dispenser inventory and try to find a repairable item inside
         Inventory inv = ((Dispenser)dispenserLoc.getBlock().getState()).getInventory();
-        ItemStack is = this.findRepairItem(inv);
+        ItemStack repairIs = this.findRepairItem(inv);
         // No repairable item found
-        if (is == null) {
+        if (repairIs == null) {
             player.sendMessage(ChatColor.RED + "There is no item present that can be repaired");
             return true;
         }
+        RepairCost totalCost = this.getTotalRepaircost(repairIs);
         // Display repair cost
-        player.sendMessage(ChatColor.AQUA + "The cost to repair " + ChatColor.GREEN + MaterialNames.getItemName(is.getTypeId()) + ChatColor.AQUA + " is:");
-        player.sendMessage(Utils.getCostString(ir.getRepairCost(is.getType())));
+        player.sendMessage(ChatColor.AQUA + "The cost to repair " + ChatColor.GREEN + MaterialNames.getItemName(repairIs.getTypeId()) + ChatColor.AQUA + " is:");
+        player.sendMessage(Utils.getCostString(totalCost));
+        return true;
+    }
+    
+    public boolean leftClickEvent(Player player, Location loc) {
+        // If the button is not part of a repair station, ignore the event
+        if (!buttonLocToName.containsKey(loc)) {
+            return false;
+        }
+        
+        if (!player.hasPermission(Properties.userPermissions)) {
+            player.sendMessage(ChatColor.RED + "You don't have permission to use this repair station");
+            return true;
+        }
+        
+        RepairStation rs = this.getStationFromButton(loc);
+        Location dispenserLoc = rs.getDispenserLoc();
+        boolean success = true;
+        // No dispenser at dispenser location
+        if (!dispenserLoc.getBlock().getType().equals(Material.DISPENSER)) {
+            ir.log(Level.WARNING, "Error - Dispenser does not exist at location " + dispenserLoc.toString() + " removing station");
+            // No exception should happen here since the parameters are driven by internal data
+            try {
+                this.deleteStation(rs.getName());
+            } catch (Exception ex) {}
+        }
+        // Grab dispenser inventory and try to find a repairable item inside
+        Inventory inv = ((Dispenser)dispenserLoc.getBlock().getState()).getInventory();
+        ItemStack repairIs = this.findRepairItem(inv);
+        // No repairable item found
+        if (repairIs == null) {
+            player.sendMessage(ChatColor.RED + "There is no item present that can be repaired");
+            return true;
+        }
+        RepairCost totalCost = this.getTotalRepaircost(repairIs);      
         // Player balance calculation
-        Double cost = this.playerEconCheck(player, is.getType());
+        Double cost = this.playerEconCheck(player, totalCost);
+        if (cost == null) {
+            player.sendMessage(ChatColor.RED + "This recipe is not available when the server economy is disabled");
+            ir.log(Level.WARNING, "An item could not be repaired because no economy plugin is hooked");
+            return true;
+        }
         // Spare/missing items check
-        HashMap<Material, Integer> leftover = this.repairMatCheck(inv, is);
+        HashMap<Material, Integer> leftover = this.repairMatCheck(inv, repairIs, totalCost);
         // Player exp calculation
-        Integer expMissing = this.playerExpCheck(player, is.getType());
+        Integer expMissing = this.playerExpCheck(player, totalCost);
         // Incorrect materials
         if (leftover != null) {
             String missMsg = ChatColor.RED + "Missing: ";
@@ -139,21 +180,21 @@ public class RepairStationHandler {
         }
         if (success) {
             // Charge player econ cost, cancel event if it failed
-            if (!this.chargePlayerEcon(player, is.getType())) {
+            if (!this.chargePlayerEcon(player, totalCost)) {
                 player.sendMessage(ChatColor.RED + "An error occurred trying to charge " + ir.econ.currencyNamePlural() + ", repair cancelled");
                 return true;
             }
             // Charge exp
-            this.chargePlayerExp(player, is.getType());
+            this.chargePlayerExp(player, totalCost);
             // Copy item, clear inventory and replace the item with full durability
-            ItemStack copy = is.clone();
+            ItemStack copy = repairIs.clone();
             Dispenser disp = (Dispenser)dispenserLoc.getBlock().getState();
             disp.getInventory().clear();
             Short maxDura = 0;
             copy.setDurability(maxDura);
             disp.getInventory().addItem(copy);
             disp.update(true);
-            player.sendMessage(ChatColor.AQUA + "Your " + is.getType().toString() + " has been repaied");
+            player.sendMessage(ChatColor.AQUA + "Your " + repairIs.getType().toString() + " has been repaired");
             return false;
         }
         return true;
@@ -189,7 +230,7 @@ public class RepairStationHandler {
     }
     
     // ************  PRIVATE METHODS *************
-    
+       
     private void saveStation(RepairStation station) {
         Arguments arg = new Arguments(station.getName());
         arg.setValue(buttonLocKey, Utils.locToString(station.getButtonLoc()));
@@ -218,11 +259,9 @@ public class RepairStationHandler {
         return null;
     }
     
-    private HashMap<Material, Integer> repairMatCheck(Inventory inv, ItemStack repairIs) {
-        Material mat = repairIs.getType();
-        RepairCost rc = ir.getRepairCost(mat);
+    private HashMap<Material, Integer> repairMatCheck(Inventory inv, ItemStack repairIs, RepairCost cost) {
         // Grab a clone of the total material cost so we can manipulate the values in it without changing the original
-        HashMap<Material, Integer> totalCost = rc.getHashMapCopy();
+        HashMap<Material, Integer> totalCost = cost.getHashMapCopy();
         HashMap<Material, Integer> extraMats = new HashMap<Material, Integer>();
         // Loop over each inventory slot to check for materials needed.  None of the bukkit contains methods can deal with items spread out over stacks
         for (ItemStack is : inv.getContents()) {
@@ -278,22 +317,22 @@ public class RepairStationHandler {
         return (extraMats.isEmpty() ? null : extraMats);
     }
     
-    private Double playerEconCheck(Player player, Material mat) {
-        Integer price = ir.getRepairCost(mat).getEconCost();
+    private Double playerEconCheck(Player player, RepairCost cost) {
+        Integer price = cost.getEconCost();
         // No cost associated with recipe, automatically return true
-        if (price == null) {
+        if ((price == null) || (price == 0)) {
             return 0d;
         }
         // Economy is not loaded, recipes with a cost do not work
         if (!ir.isEconEnabled()) {
-            return 123d; // Exception
+            return null;
         }
         Double balance = ir.econ.getBalance(player.getName());
         return (balance >= price) ? 0d : (price - balance);
     }
     
-    private Integer playerExpCheck(Player player, Material mat) {
-        Integer expCost = ir.getRepairCost(mat).getExpCost();
+    private Integer playerExpCheck(Player player, RepairCost cost) {
+        Integer expCost = cost.getExpCost();
         Integer playerExp = Utils.getTotalExp(player);
         return ((playerExp >= expCost) ? 0 : (expCost - playerExp));
     }
@@ -331,17 +370,17 @@ public class RepairStationHandler {
         return new RepairStation(buttonLoc, dispenserLoc, stationName);
     }
     
-    private boolean chargePlayerEcon(Player player, Material mat) {
-            Integer cost = ir.getRepairCost(mat).getEconCost();
-            if (cost == 0) {
+    private boolean chargePlayerEcon(Player player, RepairCost cost) {
+            Integer price = cost.getEconCost();
+            if (price == 0) {
                 return true;
             }
-            EconomyResponse er = ir.econ.withdrawPlayer(player.getName(), cost);
+            EconomyResponse er = ir.econ.withdrawPlayer(player.getName(), price);
             return er.transactionSuccess();
     }
     
-    private void chargePlayerExp(Player player, Material mat) {
-        Integer expCost = ir.getRepairCost(mat).getExpCost();
+    private void chargePlayerExp(Player player, RepairCost cost) {
+        Integer expCost = cost.getExpCost();
         if (expCost == 0) {
             return;
         }
@@ -349,5 +388,24 @@ public class RepairStationHandler {
         curExp = curExp - expCost;
         Utils.resetExp(player);
         player.giveExp(curExp);
+    }
+    
+    private RepairCost getTotalRepaircost(ItemStack is) {
+        RepairCost cost = ir.getRepairCost(is.getType());
+        if (cost == null) {
+            return null;
+        }
+        if ((is.getEnchantments() == null) || (is.getEnchantments().isEmpty())) {
+            return cost;
+        }
+        Map<Enchantment, Integer> enchantMap = is.getEnchantments();
+        RepairCost enchantCost;
+        for (Enchantment enchant : enchantMap.keySet()) {
+            enchantCost = ir.getEnchantcost(new ItemEnchantment (enchant.getName(), enchantMap.get(enchant)));
+            if (enchantCost != null) {
+                cost = Utils.addCosts(cost, enchantCost);
+            }
+        }
+        return cost;
     }
 }
