@@ -4,7 +4,7 @@
 
   <groupId>com.noheroes</groupId>
   <artifactId>ItemRepair</artifactId>
-  <version>0.51</version>
+  <version>0.53</version>
   <packaging>jar</packaging>
 
   <name>ItemRepair</name>

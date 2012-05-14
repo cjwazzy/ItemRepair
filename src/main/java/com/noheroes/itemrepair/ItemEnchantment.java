@@ -24,6 +24,7 @@ public class ItemEnchantment {
             this.enchantLevel = Integer.valueOf(enchantLevel);
         } catch (NumberFormatException ex) {
             this.isValid = false;
+            return;
         }
         this.isValid = true;
     }
