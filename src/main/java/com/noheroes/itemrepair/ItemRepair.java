@@ -178,11 +178,14 @@ public class ItemRepair extends JavaPlugin {
         ReadType type = ReadType.MATERIAL;
         for (String line : strList) {
             lineCount++;
+            // Ignore empty lines
+            if ((line == null) || (line.length() == 0)) {
+                continue;
+            }
             // Ignore comments
             if (line.charAt(0) == '#') {
                 continue;
             }
-            this.log(line);
             if (line.trim().equals(Properties.materialRepairIdentifier)) {
                 type = ReadType.MATERIAL;
                 continue;
