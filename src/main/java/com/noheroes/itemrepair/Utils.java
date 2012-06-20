@@ -41,9 +41,13 @@ public class Utils {
         return material;
     }
     
-    public static RepairCost addCosts(RepairCost rc1, RepairCost rc2) {
-        Integer finalEconCost = rc1.getEconCost() + rc2.getEconCost();
-        Integer finalExpCost = rc1.getExpCost() + rc2.getExpCost();
+    public RepairCost addCosts(RepairCost rc1, RepairCost rc2) {
+        return addCosts(rc1, rc2, 1);
+    }
+    
+    public static RepairCost addCosts(RepairCost rc1, RepairCost rc2, Integer multiplier) {
+        Integer finalEconCost = rc1.getEconCost() + (rc2.getEconCost() * multiplier);
+        Integer finalExpCost = rc1.getExpCost() + (rc2.getExpCost() * multiplier);
         HashMap<Material, Integer> addMap = rc1.getHashMap();
         HashMap<Material, Integer> finalMap = rc2.getHashMapCopy();
         for (Material mat : addMap.keySet()) {
@@ -53,7 +57,7 @@ public class Utils {
             }
             finalMap.put(mat, amount);
         }
-        return new RepairCost(finalEconCost, finalExpCost, finalMap);
+        return new RepairCost(finalEconCost, finalExpCost, rc1.getMultiplier(), finalMap);
     }
     
     public static Integer getIntFromString(String intStr) {

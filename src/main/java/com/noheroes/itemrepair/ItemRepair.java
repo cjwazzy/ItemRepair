@@ -48,7 +48,10 @@ public class ItemRepair extends JavaPlugin {
         instance = this;
         this.loadConfig(this.getConfig());
         if (Properties.useEconomy && !this.setupEconomy()) {
-            this.log(Level.SEVERE, "Vault failed to hook into any economy plugin, disabled any recipes using economy.  If you do not use an economy plugin, disable UseEconomy in the config file");
+            this.log(Level.SEVERE, "Vault failed to hook into any economy plugin.  If you do not use an economy plugin, disable UseEconomy in the config file");
+            this.log(Level.SEVERE, "Disabling plugin");
+            this.getServer().getPluginManager().disablePlugin(this);
+            return;
         }
         getCommand("itemrepair").setExecutor(new IRCommandExecutor(this));
         listener = new IRListener(this);
@@ -56,6 +59,10 @@ public class ItemRepair extends JavaPlugin {
         loadRepairFile();
         stationHandler = new RepairStationHandler(this, this.getDataFolder().getPath());
         this.populateExpTable();
+    }
+    
+    public static ItemRepair getInstance() {
+        return instance;
     }
     
     public static void log(String message) {
@@ -202,6 +209,9 @@ public class ItemRepair extends JavaPlugin {
                 continue;
             }
             RepairCost rc = new RepairCost(splitLine[1].trim(), lineCount);
+            if (!rc.isValid()) {
+               this.log(Level.WARNING, "Cannot load cost on line #" + lineCount + ", economy is disabled..."); 
+            }
             if (type.equals(ReadType.MATERIAL)) {
                 Material mat = Utils.getMaterialFromString(splitLine[0].trim());
                 if (mat == null) {

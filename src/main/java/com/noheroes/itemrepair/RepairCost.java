@@ -16,18 +16,24 @@ public class RepairCost {
     private Integer economyCost;
     private Integer expCost;
     private HashMap<Material, Integer> materialCost;
+    private Integer multiplier;
+    private boolean isValid;
     
     public RepairCost(String price, Integer lineNr) {
         materialCost = new HashMap<Material, Integer>();
         economyCost = 0;
         expCost = 0;
+        multiplier = 1;
+        isValid = true;
         setCostFromString(price, lineNr);
     }
     
-    public RepairCost(Integer economyCost, Integer expCost, HashMap<Material, Integer> materialCost) {
+    public RepairCost(Integer economyCost, Integer expCost, Integer multiplier, HashMap<Material, Integer> materialCost) {
         this.economyCost = economyCost;
         this.expCost = expCost;
         this.materialCost = materialCost;
+        this.multiplier = multiplier;
+        isValid = true;
     }
     
     public HashMap<Material, Integer> getHashMapCopy() {
@@ -45,6 +51,19 @@ public class RepairCost {
     
     public Integer getExpCost() {
         return expCost;
+    }
+    
+    public Integer getMultiplier() {
+        return multiplier;
+    }
+    
+    public void applyMultiplier(Integer mult) {
+        economyCost *= mult;
+        expCost *= mult;
+    }
+    
+    public boolean isValid() {
+        return this.isValid;
     }
     
     private void setCostFromString(String price, Integer lineNr) {
@@ -67,10 +86,17 @@ public class RepairCost {
             }
             // Check if material listed is the economy identifier
             if (priceStrArray[0].trim().equals(Properties.economyIdentifier)) {
+                if (!ItemRepair.getInstance().isEconEnabled() && amount > 0) {
+                    isValid = false;
+                    return;
+                }
                 economyCost = amount;
             }
             else if (priceStrArray[0].trim().equals(Properties.expIdentifier)) {
                 expCost = amount;
+            }
+            else if (priceStrArray[0].trim().equals(Properties.multiplierIdentifier)) {
+                multiplier = amount;
             }
             else {
                 // Grab material from string and verify it exists

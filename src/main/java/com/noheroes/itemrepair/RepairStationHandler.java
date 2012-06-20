@@ -194,7 +194,7 @@ public class RepairStationHandler {
             copy.setDurability(maxDura);
             disp.getInventory().addItem(copy);
             disp.update(true);
-            player.sendMessage(ChatColor.AQUA + "Your " + repairIs.getType().toString() + " has been repaired");
+            player.sendMessage(ChatColor.AQUA + "Your " + MaterialNames.getItemName(repairIs.getTypeId()) + " has been repaired");
             return false;
         }
         return true;
@@ -215,6 +215,25 @@ public class RepairStationHandler {
                 ir.log("Dispenser for station " + stationName + " was destroyed, removing station");
             } catch (Exception ex) { }
         }
+    }
+    
+    public RepairCost getTotalRepaircost(ItemStack is) {
+        RepairCost cost = ir.getRepairCost(is.getType());
+        if (cost == null) {
+            return null;
+        }
+        if ((is.getEnchantments() == null) || (is.getEnchantments().isEmpty())) {
+            return cost;
+        }
+        Map<Enchantment, Integer> enchantMap = is.getEnchantments();
+        RepairCost enchantCost;
+        for (Enchantment enchant : enchantMap.keySet()) {
+            enchantCost = ir.getEnchantcost(new ItemEnchantment (enchant.getName(), enchantMap.get(enchant)));
+            if (enchantCost != null) {
+                cost = Utils.addCosts(cost, enchantCost, cost.getMultiplier());
+            }
+        }
+        return cost;
     }
     
     public boolean stationExists(String stationName) {
@@ -388,24 +407,5 @@ public class RepairStationHandler {
         curExp = curExp - expCost;
         Utils.resetExp(player);
         player.giveExp(curExp);
-    }
-    
-    private RepairCost getTotalRepaircost(ItemStack is) {
-        RepairCost cost = ir.getRepairCost(is.getType());
-        if (cost == null) {
-            return null;
-        }
-        if ((is.getEnchantments() == null) || (is.getEnchantments().isEmpty())) {
-            return cost;
-        }
-        Map<Enchantment, Integer> enchantMap = is.getEnchantments();
-        RepairCost enchantCost;
-        for (Enchantment enchant : enchantMap.keySet()) {
-            enchantCost = ir.getEnchantcost(new ItemEnchantment (enchant.getName(), enchantMap.get(enchant)));
-            if (enchantCost != null) {
-                cost = Utils.addCosts(cost, enchantCost);
-            }
-        }
-        return cost;
     }
 }

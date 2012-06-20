@@ -20,6 +20,7 @@ public class Properties {
     public final static String enchantLevelSplitter = ":";
     public final static String economyIdentifier = "ECON";
     public final static String expIdentifier = "XP";
+    public final static String multiplierIdentifier = "MULT";
     public final static String genericEnchantIdentifier = "GenericEnchant";
     public final static String materialRepairIdentifier = "[MaterialCost]";
     public final static String enchantRepairIdentifier = "[EnchantCost]";

@@ -21,16 +21,7 @@ public class IRCommandExecutor implements CommandExecutor {
         this.ir = ir;
     }
     
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("You must be a player to use this command");
-            return true;
-        }
-        // We hide this command entirely if the user does not have permission
-        if (!sender.hasPermission(Properties.adminPermissions) && !sender.isOp()) {
-            sender.sendMessage("Unknown command. Type \"help\" for help.");
-            return true;
-        }
+    public boolean onCommand(CommandSender cs, Command command, String label, String[] args) {
         String com;
         if (args.length == 0) {
             com = "help";
@@ -39,33 +30,66 @@ public class IRCommandExecutor implements CommandExecutor {
             com = args[0];
         }
         if (com.equalsIgnoreCase("create")) {
+            if (!(cs instanceof Player)) {
+                cs.sendMessage("You must be a player to use this command");
+                return true;
+            }
+            if (!cs.hasPermission(Properties.adminPermissions) && !cs.isOp()) {
+                cs.sendMessage(ChatColor.RED + "You do not have permission to use this command");
+                return true;
+            }
             if (args.length < 2) {
-                sender.sendMessage(ChatColor.RED + "You must specify a name for the station");
+                cs.sendMessage(ChatColor.RED + "You must specify a name for the station");
             }
             else {
                 if (ir.getHandler().stationExists(args[1])) {
-                    sender.sendMessage(ChatColor.RED + "A station with this name already exists");
+                    cs.sendMessage(ChatColor.RED + "A station with this name already exists");
                 }
                 else {
-                    ir.addPlayerToEditMode((Player)sender, args[1]);
+                    ir.addPlayerToEditMode((Player)cs, args[1]);
                 }
             }
         }
         else if (com.equalsIgnoreCase("delete") || com.equalsIgnoreCase("remove")) {
+            if (!cs.hasPermission(Properties.adminPermissions) && !cs.isOp()) {
+                cs.sendMessage(ChatColor.RED + "You do not have permission to use this command");
+                return true;
+            }
             if (args.length < 2) {
-                sender.sendMessage(ChatColor.RED + "You must specify a name for the station");
+                cs.sendMessage(ChatColor.RED + "You must specify a name for the station");
             }
             else {
                 try {
                     ir.getHandler().deleteStation(args[1]);
                 } catch (MissingOrIncorrectParametersException ex) {
-                    sender.sendMessage(ex.getMessage());
+                    cs.sendMessage(ex.getMessage());
                 }
             }
         }
         else if (com.equalsIgnoreCase("reload")) {
+            if (!cs.hasPermission(Properties.adminPermissions) && !cs.isOp()) {
+                cs.sendMessage(ChatColor.RED + "You do not have permission to use this command");
+                return true;
+            }
             ir.reloadRepairFile();
-            sender.sendMessage(ChatColor.YELLOW + "Repair file reloaded");
+            cs.sendMessage(ChatColor.YELLOW + "Repair file reloaded");
+        }
+        else if (com.equalsIgnoreCase("cost")) {
+            if (!(cs instanceof Player)) {
+                cs.sendMessage("You must be a player to use this command");
+                return true;
+            }
+            if (!cs.hasPermission(Properties.userPermissions) && !cs.hasPermission(Properties.adminPermissions) && !cs.isOp()) {
+                cs.sendMessage(ChatColor.RED + "You do not have permission to use this command");
+                return true;
+            }
+            RepairCost cost = ir.getHandler().getTotalRepaircost(((Player)cs).getItemInHand());
+            if (cost == null) {
+                cs.sendMessage(ChatColor.RED + "This item cannot be repaired");
+            }
+            else {
+                cs.sendMessage(Utils.getCostString(cost));
+            }
         }
         return true;
     }
