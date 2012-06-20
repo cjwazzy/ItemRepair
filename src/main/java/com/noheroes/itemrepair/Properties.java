@@ -22,8 +22,9 @@ public class Properties {
     public final static String expIdentifier = "XP";
     public final static String multiplierIdentifier = "MULT";
     public final static String genericEnchantIdentifier = "GenericEnchant";
-    public final static String materialRepairIdentifier = "[MaterialCost]";
-    public final static String enchantRepairIdentifier = "[EnchantCost]";
+    public final static String materialRepairIdentifier = "[Material Cost]";
+    public final static String enchantRepairIdentifier = "[Enchant Cost]";
+    public final static String uniqueRepairIdentifier = "[Unique Cost]";
     public final static String adminPermissions = "itemrepair.admin";
     public final static String userPermissions = "itemrepair.use";
     public static final int MAX_LEVEL = 1000;

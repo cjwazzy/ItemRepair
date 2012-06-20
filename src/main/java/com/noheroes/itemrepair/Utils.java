@@ -21,7 +21,7 @@ public class Utils {
     private Utils () {};
     
     public enum ReadType {
-        MATERIAL, ENCHANT
+        MATERIAL, ENCHANT, UNIQUE
     }
     
     public static Material getMaterialFromString(String mat) {

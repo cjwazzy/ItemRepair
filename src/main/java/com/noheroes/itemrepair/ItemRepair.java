@@ -18,7 +18,9 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -31,6 +33,7 @@ public class ItemRepair extends JavaPlugin {
     
     private HashMap<Material, RepairCost> repairCosts = new HashMap<Material, RepairCost>();
     private HashMap<ItemEnchantment, RepairCost> enchantCosts = new HashMap<ItemEnchantment, RepairCost>();
+    private HashMap<ItemStack, RepairCost> uniqueCosts = new HashMap<ItemStack, RepairCost>();
     private HashMap<Player, EditMode> playerEditMode = new HashMap<Player, EditMode>();
     private IRListener listener;
     private RepairStationHandler stationHandler;
@@ -129,8 +132,11 @@ public class ItemRepair extends JavaPlugin {
         return stationHandler;
     }
     
-    public RepairCost getRepairCost(Material mat) {
-        return repairCosts.get(mat);
+    public RepairCost getRepairCost(ItemStack is) {
+        ItemStack isClone = is.clone();
+        isClone.setDurability((short)0);
+        // If the item has a unique cost, return it, otherwise return the cost for the base item
+        return uniqueCosts.containsKey(isClone) ? uniqueCosts.get(isClone) : repairCosts.get(is.getType());
     }
     
     public RepairCost getEnchantcost(ItemEnchantment ie) {
@@ -201,6 +207,10 @@ public class ItemRepair extends JavaPlugin {
                 type = ReadType.ENCHANT;
                 continue;
             }
+            if (line.trim().equals(Properties.uniqueRepairIdentifier)) {
+                type = ReadType.UNIQUE;
+                continue;
+            }
             // Split line into item and cost
             String[] splitLine = line.split(Properties.itemToCostSplitter);
             // We should get 2 lines out of this, if not the line was not in the correct format
@@ -232,6 +242,41 @@ public class ItemRepair extends JavaPlugin {
                     continue;
                 }
                 enchantCosts.put(ie, rc);
+            }
+            if (type.equals(ReadType.UNIQUE)) {
+                rc.setUniqueCost(true);
+                String[] toolSplitStr = splitLine[0].trim().split(Properties.costSplitter);
+                if ((toolSplitStr == null) || (toolSplitStr.length == 0)) {
+                    this.log(Level.WARNING, "Error reading line #" + lineCount + ", incorrect format");
+                    continue;
+                }
+                Material mat = Utils.getMaterialFromString(toolSplitStr[0].trim());
+                if (mat == null) {
+                    this.log(Level.WARNING, "Error reading line #" + lineCount + " material " + toolSplitStr[0].trim() + " does not exist, skipping...");
+                    continue;
+                }
+                ItemStack is = new ItemStack(mat);
+                for (int i = 1; i < toolSplitStr.length; i++) {
+                    String[] enchantSplit = toolSplitStr[i].trim().split(Properties.enchantLevelSplitter);
+                    if (enchantSplit.length != 2) {
+                        this.log(Level.WARNING, "Error reading line #" + lineCount + ", enchant information " + toolSplitStr[i].trim() + " is not formatted correctly");
+                        continue;                        
+                    }
+                    Enchantment ench = Enchantment.getByName(enchantSplit[0].toUpperCase().trim());
+                    if (ench == null) {
+                        this.log(Level.WARNING, "Error reading line #" + lineCount + ", enchant " + enchantSplit[0].trim() + " does not exist");
+                        continue;                                                
+                    }
+                    Integer lvl;
+                    try {
+                        lvl = Integer.valueOf(enchantSplit[1].trim());
+                    } catch (NumberFormatException ex) {
+                        this.log(Level.WARNING, "Error reading line #" + lineCount + ", invalid enchant level");
+                        continue;                        
+                    }
+                    is.addUnsafeEnchantment(ench, lvl);
+                }
+                this.uniqueCosts.put(is, rc);
             }
         }
         return true;

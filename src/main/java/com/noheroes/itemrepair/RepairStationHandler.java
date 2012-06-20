@@ -218,11 +218,11 @@ public class RepairStationHandler {
     }
     
     public RepairCost getTotalRepaircost(ItemStack is) {
-        RepairCost cost = ir.getRepairCost(is.getType());
+        RepairCost cost = ir.getRepairCost(is);
         if (cost == null) {
             return null;
         }
-        if ((is.getEnchantments() == null) || (is.getEnchantments().isEmpty())) {
+        if ((is.getEnchantments() == null) || (is.getEnchantments().isEmpty()) || cost.isUniqueCost()) {
             return cost;
         }
         Map<Enchantment, Integer> enchantMap = is.getEnchantments();
@@ -264,14 +264,12 @@ public class RepairStationHandler {
     }
     
     private ItemStack findRepairItem(Inventory inv) {
-        Material mat;
         for (ItemStack is : inv.getContents()) {
             if (is == null) {
                 continue;
             }
-            mat = is.getType();
             // Return first repairable item found
-            if (ir.getRepairCost(mat) != null) {
+            if (ir.getRepairCost(is) != null) {
                 return is;
             }
         }

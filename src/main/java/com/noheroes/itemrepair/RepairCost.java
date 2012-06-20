@@ -18,14 +18,22 @@ public class RepairCost {
     private HashMap<Material, Integer> materialCost;
     private Integer multiplier;
     private boolean isValid;
+    // If this flag is set this holds the full cost for a single unique item/enchant combo
+    private boolean uniqueCost;
     
-    public RepairCost(String price, Integer lineNr) {
+   
+    public RepairCost(String price, Integer lineNr, boolean uniqueCost) {
         materialCost = new HashMap<Material, Integer>();
         economyCost = 0;
         expCost = 0;
         multiplier = 1;
         isValid = true;
+        this.uniqueCost = uniqueCost;
         setCostFromString(price, lineNr);
+    }
+    
+    public RepairCost(String price, Integer lineNr) {
+        this(price, lineNr, false);
     }
     
     public RepairCost(Integer economyCost, Integer expCost, Integer multiplier, HashMap<Material, Integer> materialCost) {
@@ -34,6 +42,7 @@ public class RepairCost {
         this.materialCost = materialCost;
         this.multiplier = multiplier;
         isValid = true;
+        uniqueCost = false;
     }
     
     public HashMap<Material, Integer> getHashMapCopy() {
@@ -64,6 +73,14 @@ public class RepairCost {
     
     public boolean isValid() {
         return this.isValid;
+    }
+    
+    public void setUniqueCost(boolean value) {
+        this.uniqueCost = value;
+    }
+    
+    public boolean isUniqueCost() {
+        return this.uniqueCost;
     }
     
     private void setCostFromString(String price, Integer lineNr) {
