@@ -1,0 +1,133 @@
+# Cost associated with repairing the acual item itself
+[Material Cost]
+# Diamond Tools
+diamond_pickaxe=Diamond:3,MULT:10
+diamond_spade=diamond:1,MULT:10
+diamond_axe=diamond:2,MULT:10
+diamond_sword=diamond:2,MULT:10
+# Diamond Armor
+diamond_boots=diamond:2,MULT:10
+diamond_chestplate=diamond:4,MULT:10
+diamond_leggings=diamond:3,MULT:10
+diamond_helmet=diamond:3,MULT:10
+# Iron Tools
+iron_pickaxe=iron_ingot:3,MULT:2
+iron_spade=iron_ingot:1,MULT:2
+iron_axe=iron_ingot:2,MULT:2
+iron_sword=iron_ingot:2,MULT:2
+# Iron Armor
+iron_boots=iron_ingot:2,MULT:4
+iron_chestplate=iron_ingot:4,MULT:4
+iron_leggings=iron_ingot:3,MULT:4
+iron_helmet=iron_ingot:3,MULT:4
+# Gold Tools
+gold_pickaxe=gold_ingot:3,MULT:1
+gold_spade=gold_ingot:1,MULT:1
+gold_axe=gold_ingot:2,MULT:1
+gold_sword=gold_ingot:2,MULT:1
+# Gold Armor
+gold_boots=gold_ingot:2,MULT:1
+gold_chestplate=gold_ingot:4,MULT:1
+gold_leggings=gold_ingot:3,MULT:1
+gold_helmet=gold_ingot:3,MULT:1
+# Bow
+bow=stick:3,MULT:10
+
+# Cost added for various enchants on the item
+[Enchant Cost]
+# Fortune (Tools)
+LOOT_BONUS_BLOCKS:1=ECON: 30
+LOOT_BONUS_BLOCKS:2=ECON: 60
+LOOT_BONUS_BLOCKS:3=ECON: 90
+# Unbreaking (Tools)
+durability:1=ECON:50
+durability:2=ECON:100
+durability:3=ECON:150
+# Silk Touch Tools)
+silk_touch:1=ECON:30
+# Efficiency (Tools)
+dig_speed:1=ECON:10
+dig_speed:2=ECON:20
+dig_speed:3=ECON:30
+dig_speed:4=ECON:40
+dig_speed:5=ECON:50
+# Power (Bow)
+arrow_damage:1=ECON:10
+arrow_damage:2=ECON:20
+arrow_damage:3=ECON:30
+arrow_damage:4=ECON:40
+arrow_damage:5=ECON:50
+# Flame (Bow)
+arrow_flame:1=ECON:30
+# Knockback (Bow)
+arrow_knockback:1=ECON:20
+arrow_knockback:2=ECON:30
+# Infinity (Bow)
+arrow_infinite:1=ECON:50
+# Sharpness (Sword)
+damage_all:1=ECON:10
+damage_all:2=ECON:20
+damage_all:3=ECON:30
+damage_all:4=ECON:40
+damage_all:5=ECON:50
+# Bane of Arthropods (Sword)
+damage_arthropods:1=ECON:2
+damage_arthropods:2=ECON:4
+damage_arthropods:3=ECON:6
+damage_arthropods:4=ECON:8
+damage_arthropods:5=ECON:10
+# Smite (Sword)
+damage_undead:1=ECON:3
+damage_undead:2=ECON:6
+damage_undead:3=ECON:9
+damage_undead:4=ECON:12
+damage_undead:5=ECON:15
+# Knockback (Sword)
+knockback:1=ECON:3
+knockback:2=ECON:5
+# Fire Aspect (Sword)
+fire_aspect:1=ECON:5
+fire_aspect:2=ECON:10
+# Looting (sword)
+loot_bonus_mobs:1=ECON:10
+loot_bonus_mobs:2=ECON:20
+loot_bonus_mobs:3=ECON:30
+# Protection (Armor)
+protection_environmental:1=ECON:15
+protection_environmental:2=ECON:30
+protection_environmental:3=ECON:45
+protection_environmental:4=ECON:60
+# Fire Protection (Armor)
+protection_fire:1=ECON:3
+protection_fire:2=ECON:6
+protection_fire:3=ECON:9
+protection_fire:4=ECON:12
+# Blast Protection (Armor)
+protection_explosions:1=ECON:5
+protection_explosions:2=ECON:10
+protection_explosions:3=ECON:15
+protection_explosions:4=ECON:20
+# Projectile Protection (Armor)
+protection_projectile:1=ECON:5
+protection_projectile:2=ECON:10
+protection_projectile:3=ECON:15
+protection_projectile:4=ECON:20
+# Feather Falling (Boots)
+protection_fall:1=ECON:7
+protection_fall:2=ECON:14
+protection_fall:3=ECON:21
+protection_fall:4=ECON:28
+# Respiration (Helmet)
+oxygen:1=ECON:10
+oxygen:2=ECON:20
+oxygen:3=ECON:30
+# Aqua Afinity (Helmet)
+water_worker:1=ECON:15
+# Any unlisted enchant of level 1/2/3
+GenericEnchant:1=ECON:10
+GenericEnchant:2=ECON:20
+GenericEnchant:3=ECON:30
+[Unique Cost]
+diamond_hoe,silk_touch:1=ender_stone:1,web:1,ECON:300
+diamond_boots,protection_fall:5=ender_stone:3,web:1,ECON:1000
+iron_axe,arrow_infinite:1=ender_stone:2,ECON:100
